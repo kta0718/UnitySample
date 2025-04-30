@@ -28,16 +28,16 @@ public class DungeonRunner : MonoBehaviour
         _fsm = new(this); // ‰Šú‰»
 
         // ‘JˆÚ‚ğ“o˜^
-        _fsm.AddTransition<Idle, Entry>(1);
-        _fsm.AddTransition<Entry, Explore>(2);
-        _fsm.AddTransition<Explore, Discover>(3);
-        _fsm.AddTransitionRange<Discover>(
-            (4, typeof(Explore), () => _treasureCount < 3),
-            (5, typeof(Idle), () => true));
-        _fsm.AddTransition<SyncAsyncFSM<DungeonRunner>.AnyState, Menu>(6, () => _fsm.CurrentState.GetType() != typeof(Menu));
-        _fsm.AddTransition<Menu, SyncAsyncFSM<DungeonRunner>.PreviousState>(7);
+        _fsm.AddTransition<IdleState, EntryState>(1);
+        _fsm.AddTransition<EntryState, ExploreState>(2);
+        _fsm.AddTransition<ExploreState, State>(3);
+        _fsm.AddTransitionRange<State>(
+            (4, typeof(ExploreState), () => _treasureCount < 3),
+            (5, typeof(IdleState), () => true));
+        _fsm.AddTransition<SyncAsyncFSM<DungeonRunner>.AnyState, MenuState>(6, () => _fsm.CurrentState.GetType() != typeof(MenuState));
+        _fsm.AddTransition<MenuState, SyncAsyncFSM<DungeonRunner>.PreviousState>(7);
 
-        _fsm.Start<Idle>(); // ŠJn
+        _fsm.Start<IdleState>(); // ŠJn
     }
 
     // Update is called once per frame
@@ -50,13 +50,13 @@ public class DungeonRunner : MonoBehaviour
             _fsm.Schedule(6); // ƒƒjƒ…[‚Ö‚Ì‘JˆÚ‚ğ—\–ñ
         }
 
-        _fsm.Dispatch(); // ‘JˆÚ‚ğÀs
+        _fsm.DispatchIfScheduled(); // ‘JˆÚ‚ğÀs
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
         // ’Tõ’†‚É‚¨•ó‚ğ”­Œ©‚µ‚½‚ç
-        if (_fsm.CurrentState.GetType() == typeof(Explore) && collision.collider.TryGetComponent<DungeonTreasure>(out var treasure))
+        if (_fsm.CurrentState.GetType() == typeof(ExploreState) && collision.collider.TryGetComponent<DungeonTreasure>(out var treasure))
         {
             _treasure = treasure;
             _treasureCount++;
@@ -70,15 +70,15 @@ public class DungeonRunner : MonoBehaviour
     }
 
     // ‘Ò‹@
-    private class Idle : SyncAsyncFSM<DungeonRunner>.SyncState
+    private class IdleState : SyncAsyncFSM<DungeonRunner>.SyncState
     {
-        public override void Enter()
+        protected internal override void Enter()
         {
             Owner._text.text = "Press Any Button";
             Owner._treasureCount = 0;
         }
 
-        public override void Update()
+        protected internal override void Update()
         {
             if (Input.anyKeyDown)
             {
@@ -88,9 +88,9 @@ public class DungeonRunner : MonoBehaviour
     }
 
     // ƒGƒ“ƒgƒŠ[
-    private class Entry : SyncAsyncFSM<DungeonRunner>.AsyncState
+    private class EntryState : SyncAsyncFSM<DungeonRunner>.AsyncState
     {
-        public override async UniTask Start(CancellationToken token)
+        protected internal override async UniTask Start(CancellationToken token)
         {
             Owner._text.text = "3";
             await UniTask.WaitForSeconds(1, cancellationToken: token);
@@ -106,11 +106,11 @@ public class DungeonRunner : MonoBehaviour
     }
 
     // ’Tõ
-    private class Explore : SyncAsyncFSM<DungeonRunner>.SyncState
+    private class ExploreState : SyncAsyncFSM<DungeonRunner>.SyncState
     {
         private const float Speed = 3;
 
-        public override void Update()
+        protected internal override void Update()
         {
             var x = Input.GetAxisRaw("Horizontal");
             var y = Input.GetAxisRaw("Vertical");
@@ -120,9 +120,9 @@ public class DungeonRunner : MonoBehaviour
     }
 
     // ”­Œ©
-    private class Discover : SyncAsyncFSM<DungeonRunner>.AsyncState
+    private class State : SyncAsyncFSM<DungeonRunner>.AsyncState
     {
-        public override async UniTask Start(CancellationToken token)
+        protected internal override async UniTask Start(CancellationToken token)
         {
             Owner._text.text = "Discover!";
             await Owner._treasure.Open(token);
@@ -132,14 +132,14 @@ public class DungeonRunner : MonoBehaviour
     }
 
     // ƒƒjƒ…[
-    private class Menu : SyncAsyncFSM<DungeonRunner>.SyncState
+    private class MenuState : SyncAsyncFSM<DungeonRunner>.SyncState
     {
-        public override void Enter()
+        protected internal override void Enter()
         {
             Owner._text.text = "Menu...";
         }
 
-        public override void Update()
+        protected internal override void Update()
         {
             if (Input.GetKeyDown(KeyCode.Escape))
             {
@@ -147,7 +147,7 @@ public class DungeonRunner : MonoBehaviour
             }
         }
 
-        public override void Exit()
+        protected internal override void Exit()
         {
             Owner._text.text = "";
         }

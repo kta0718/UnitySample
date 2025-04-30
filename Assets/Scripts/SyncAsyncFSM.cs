@@ -13,15 +13,15 @@ public class SyncAsyncFSM<TOwner> : IDisposable
     // 同期処理ステート
     public abstract class SyncState
     {
-        public TOwner Owner { get; init; }
-        public SyncAsyncFSM<TOwner> FSM { get; init; }
-        public Dictionary<int, (SyncState state, int order, Func<bool> gate)> TransitionTable { get; } = new(); // 遷移テーブル
-        public SortedDictionary<int, int> TransitionQueue { get; } = new(); // 遷移キュー
+        protected internal TOwner Owner { get; init; }
+        protected internal SyncAsyncFSM<TOwner> FSM { get; init; }
+        internal Dictionary<int, (SyncState state, int order, Func<bool> gate)> TransitionTable { get; } = new(); // 遷移テーブル
+        internal SortedDictionary<int, int> TransitionQueue { get; } = new(); // 遷移キュー
 
-        public virtual void Enter() { }
-        public virtual void Exit() { }
-        public virtual void Update() { }
-        public virtual void OnDispose() { }
+        protected internal virtual void Enter() { }
+        protected internal virtual void Exit() { }
+        protected internal virtual void Update() { }
+        internal virtual void OnDispose() { }
     }
 
     // 非同期処理ステート
@@ -31,10 +31,10 @@ public class SyncAsyncFSM<TOwner> : IDisposable
         private enum Status { Running, Completed, Interrupted }
         private Status _status = Status.Completed;
 
-        public virtual async UniTask Start(CancellationToken token) { await UniTask.CompletedTask; }
-        public virtual void OnCancel() { }
+        protected internal virtual async UniTask Start(CancellationToken token) { await UniTask.CompletedTask; }
+        protected internal virtual void OnCancel() { }
 
-        public sealed override async void Enter()
+        protected internal sealed override async void Enter()
         {
             if (_status != Status.Completed) return;
             _status = Status.Running;
@@ -53,7 +53,7 @@ public class SyncAsyncFSM<TOwner> : IDisposable
             }
         }
 
-        public sealed override void Exit()
+        protected internal sealed override void Exit()
         {
             if (_status == Status.Running)
             {
@@ -62,7 +62,7 @@ public class SyncAsyncFSM<TOwner> : IDisposable
             }
         }
 
-        public sealed override void OnDispose()
+        internal sealed override void OnDispose()
         {
             _cts.Cancel();
             _cts.Dispose();
@@ -84,7 +84,7 @@ public class SyncAsyncFSM<TOwner> : IDisposable
             set { (_previousValue, _currentValue) = (_currentValue, value); }
         }
 
-        public override void Enter()
+        protected internal override void Enter()
         {
             FSM.CurrentState = _previousValue;
             FSM.CurrentState.Enter();
@@ -111,7 +111,7 @@ public class SyncAsyncFSM<TOwner> : IDisposable
     }
 
     // 遷移を発行
-    public void Dispatch()
+    public void DispatchIfScheduled()
     {
         var any = GetOrAddState<AnyState>();
         foreach (var value in any.TransitionQueue.Values)
