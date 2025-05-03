@@ -10,12 +10,25 @@ namespace System.Runtime.CompilerServices
 
 public class SyncAsyncFSM<TOwner> : IDisposable
 {
+    internal class Transition
+    {
+        public Transition(SyncState state, int order, Func<bool> gate)
+        {
+            this.state = state;
+            this.order = order;
+            this.gate = gate;
+        }
+        public SyncState state { get; }
+        public int order { get; }
+        public Func<bool> gate {  get; }
+    }
+
     // 同期処理ステート
     public abstract class SyncState
     {
         protected internal TOwner Owner { get; init; }
         protected internal SyncAsyncFSM<TOwner> FSM { get; init; }
-        internal Dictionary<int, (SyncState state, int order, Func<bool> gate)> TransitionTable { get; } = new(); // 遷移テーブル
+        internal Dictionary<int, Transition> TransitionTable { get; } = new(); // 遷移テーブル
         internal SortedDictionary<int, int> TransitionQueue { get; } = new(); // 遷移キュー
 
         protected internal virtual void Enter() { }
@@ -184,7 +197,7 @@ public class SyncAsyncFSM<TOwner> : IDisposable
             throw new ArgumentException($"ステート'{from}'に対してイベントID '{eventId}'の遷移は登録済みです");
         }
         var to = GetOrAddState<TTo>();
-        from.TransitionTable.Add(eventId, (to, from.TransitionTable.Count, gate));
+        from.TransitionTable.Add(eventId, new Transition(to, from.TransitionTable.Count, gate));
     }
 
     // 遷移元ステートと遷移先ステートを登録
