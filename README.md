@@ -12,7 +12,7 @@ UnitySampleは、Unity向けの拡張機能やサンプルコードを集約し�
 
 ## SyncAsyncFSM
 
-`SyncAsyncFSM<TOwner>`は、**同期処理**`SyncState`と**非同期処理**`AsyncState`を同一フレームワークで管理できる汎用ステートマシンです。ゲームオブジェクトの状態遷移や、状態に応じた非同期イベント管理に適しています。
+`SyncAsyncFSM`は、**同期処理**`SyncState`と**非同期処理**`AsyncState`を同一フレームワークで管理できる汎用ステートマシンです。ゲームオブジェクトの状態遷移や、状態に応じた非同期イベント管理に適しています。
 
 ### 特徴
 
@@ -20,7 +20,7 @@ UnitySampleは、Unity向けの拡張機能やサンプルコードを集約し�
 - 条件付き遷移（ゲート関数によるフィルタリング）
 - 任意遷移ステート`AnyState`や直前ステート復帰`PreviousState`をサポート
 - 遷移予約`Schedule`と即時遷移`Dispatch`の両対応
-- UniTask両対応`Cysharp.Threading.Tasks`
+- UniTaskに対応`Cysharp.Threading.Tasks`
 
 ### 使い方
 
@@ -60,11 +60,12 @@ public class MyOwner : Monobehavior
 
 2. **遷移登録**
 
-各ステートはそれぞれ遷移テーブルを持っており、イベントID`int`,遷移先`Type`,遷移条件`Func<bool>`を追加することで遷移を登録します。
+各ステートはそれぞれ遷移テーブルを持っており、イベントID`int`・遷移先`Type`・遷移条件`Func<bool>`を追加することで遷移を登録します。
 
-初期化と起動の間に行います。
-
-登録した順に遷移が優先されます。
+-初期化と起動の間に行います。
+-登録した順に遷移が優先されます。
+-任意遷移を登録するには`TFrom`に`SyncAsyncState<MyOwner>.AnyState`を指定します。
+-直前復帰を登録するには`TTo`に`SyncAsyncState<MyOwner>.PreviousState`を指定します。
 
 ```csharp:MyOwner.cs
 // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -175,7 +176,7 @@ void ScheduleAll();
 現在のステートに登録されている遷移をすべて予約します。
 
 ```csharp
-void Dispatch();
+void DispatchIfScheduled();
 ```
 
 予約されている遷移の中から優先度順（登録された順）で遷移条件を満たせば遷移が実行されます。
