@@ -4,9 +4,10 @@ UnitySampleは、Unity向けの拡張機能やサンプルコードを集約し�
 
 ## 構成アセット
 
-- `SyncAsyncFSM` - 同期・非同期を統合管理するステートマシン（Finite State Machine）
-
 <!-- 今後のアセットが増えた際はこのリストに追記 -->
+
+- `SyncAsyncFSM` - 同期・非同期を統合管理するステートマシン（Finite State Machine）
+- `MaterialPropertyApplier` - マテリアルプロパティをゲームオブジェクトごとに変更するためのエディタ拡張
 
 ---
 
@@ -14,11 +15,15 @@ UnitySampleは、Unity向けの拡張機能やサンプルコードを集約し�
 
 `SyncAsyncFSM<TOwner>`は、**同期処理**`SyncState`と**非同期処理**`AsyncState`を同一フレームワークで管理できる汎用ステートマシンです。ゲームオブジェクトの状態遷移や、状態に応じた非同期イベント管理に適しています。
 
+### サンプルシーン
+
+`Assets/Scenes/FsmDemo.unity`
+
 ### 特徴
 
 - `SyncState`（同期）と`AsyncState`（非同期）の明確な区別
 - 条件付き遷移（ゲート関数によるフィルタリング）
-- 任意遷移ステート`AnyState`や直前ステート復帰`PreviousState`をサポート
+- 任意遷移`AnyState`や直前復帰`PreviousState`をサポート
 - 遷移予約`Schedule`と即時遷移`Dispatch`の両対応
 - UniTask両対応`Cysharp.Threading.Tasks`
 
@@ -62,9 +67,9 @@ public class MyOwner : Monobehavior
 
 各ステートはそれぞれ遷移テーブルを持っており、イベントID`int`,遷移先`Type`,遷移条件`Func<bool>`を追加することで遷移を登録します。
 
-初期化と起動の間に行います。
-
-登録した順に遷移が優先されます。
+> 💡 登録した順に遷移が優先されます。  
+> 💡 任意遷移を登録するには`TFrom`に`SyncAsyncState<MyOwner>.AnyState`を指定します。  
+> 💡 直前復帰を登録するには`TTo`に`SyncAsyncState<MyOwner>.PreviousState`を指定します。
 
 ```csharp:MyOwner.cs
 // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -178,11 +183,45 @@ void ScheduleAll();
 void Dispatch();
 ```
 
-予約されている遷移の中から優先度順（登録された順）で遷移条件を満たせば遷移が実行されます。
-実行されなかった予約済みの遷移は破棄されます。
+予約されている遷移の中から優先度順（登録された順）で遷移条件を満たせば遷移が実行されます。実行されなかった予約済みの遷移は破棄されます。
 
 ```csharp
 void Dispatch(int eventId);
 ```
 
 予約済みの遷移を破棄して指定されたイベントIDの遷移を遷移条件を満たせば実行します。
+
+## MaterialPropertyApplier
+
+`MaterialPropertyApplier`はマテリアルプロパティ（`Int`・`Float`・`FloatArray`・`Texture`・`Color`）を`MaterialPropertyBlock`を通して動的に変更するためのエディタ拡張です。
+
+### サンプルシーン
+
+`Assets/Scenes/MpaDemo.unity`
+
+### 特徴
+
+- `MaterialPropertyBlock`を使うことでマテリアルのインスタンスを作成することなくゲームオブジェクトごとに変更
+- エディタ上で変更・確認が可能
+
+### 使い方
+
+1. **GameObjectにアタッチ**
+
+任意のGameObjectに`MaterialPropertyApplier`コンポーネントをアタッチします。
+
+2. **Inspectorでプロパティ設定**
+
+Inspector上で以下のようなプロパティを設定できます：
+
+- 名前（Shader内のプロパティ名）
+- 種類（`Int`・`Float`・`FloatArray`・`Texture`・`Color`）
+- 値（選んだ種類に応じて変化）
+
+> 💡 `MaterialPropertyBlock` を使うため、Rendererを持つGameObjectにのみ有効です。
+
+3. **手動で一括適用**
+
+Unityのメニューから、登録された全オブジェクトにプロパティを一括適用できます：
+
+`MyTools > MaterialPropertyApplier.Apply`
