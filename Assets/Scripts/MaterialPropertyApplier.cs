@@ -17,6 +17,16 @@ public class MaterialPropertyApplier : MonoBehaviour
         }
     }
 
+    [MenuItem("MyTools/ShaderPropertyApplier.Clear")]
+    public static void Clear()
+    {
+        var objs = FindObjectsByType<MaterialPropertyApplier>(FindObjectsSortMode.None);
+        foreach (var obj in objs)
+        {
+            obj.ClearProperty();
+        }
+    }
+
     private void Awake()
     {
         ApplyProperty();
@@ -56,6 +66,16 @@ public class MaterialPropertyApplier : MonoBehaviour
             }
         }
 
+        renderer.SetPropertyBlock(block);
+    }
+
+    // プロパティをクリア
+    public void ClearProperty()
+    {
+        var renderer = GetComponent<Renderer>();
+        var block = new MaterialPropertyBlock();
+        renderer.GetPropertyBlock(block);
+        block.Clear();
         renderer.SetPropertyBlock(block);
     }
 

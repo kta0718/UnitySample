@@ -15,7 +15,7 @@ UnitySampleは、Unity向けの拡張機能やサンプルコードを集約し�
 
 `SyncAsyncFSM<TOwner>`は、**同期処理**`SyncState`と**非同期処理**`AsyncState`を同一フレームワークで管理できる汎用ステートマシンです。ゲームオブジェクトの状態遷移や、状態に応じた非同期イベント管理に適しています。
 
-### サンプルシーン
+### デモシーン
 
 `Assets/Scenes/FsmDemo.unity`
 
@@ -25,7 +25,7 @@ UnitySampleは、Unity向けの拡張機能やサンプルコードを集約し�
 - 条件付き遷移（ゲート関数によるフィルタリング）
 - 任意遷移`AnyState`や直前復帰`PreviousState`をサポート
 - 遷移予約`Schedule`と即時遷移`Dispatch`の両対応
-- UniTask両対応`Cysharp.Threading.Tasks`
+- UniTaskに対応`Cysharp.Threading.Tasks`
 
 ### 使い方
 
@@ -195,7 +195,7 @@ void Dispatch(int eventId);
 
 `MaterialPropertyApplier`はマテリアルプロパティ（`Int`・`Float`・`FloatArray`・`Texture`・`Color`）を`MaterialPropertyBlock`を通して動的に変更するためのエディタ拡張です。
 
-### サンプルシーン
+### デモシーン
 
 `Assets/Scenes/MpaDemo.unity`
 
@@ -218,10 +218,24 @@ Inspector上で以下のようなプロパティを設定できます：
 - 種類（`Int`・`Float`・`FloatArray`・`Texture`・`Color`）
 - 値（選んだ種類に応じて変化）
 
-> 💡 `MaterialPropertyBlock` を使うため、Rendererを持つGameObjectにのみ有効です。
+> 💡 `MaterialPropertyBlock` を使うため、Rendererを持つGameObjectにのみ有効です。  
+> 💡 プロパティの名前を知るにはシェーダーのソースコードを確認する必要があります。（慣習的に`_`で始まる場合が多い。）
+> ```shader
+> Properties
+> {
+>     _Color ("Color", Color) = (1,1,1,1)
+>     _MainTex ("Albedo", 2D) = "white" {}
+> }
+> ```
 
 3. **手動で一括適用**
 
 Unityのメニューから、登録された全オブジェクトにプロパティを一括適用できます：
 
 `MyTools > MaterialPropertyApplier.Apply`
+
+適用を解除することもできます:
+
+`MyTools > MaterialPropertyApplier.Clear`
+
+> 💡 Playモード終了時には適用したプロパティは解除されます。（これは`MaterialPropertyBlock`の特性によるものです。）
